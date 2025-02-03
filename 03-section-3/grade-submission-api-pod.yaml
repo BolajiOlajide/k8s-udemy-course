@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: grade-submission-api
+  namespace: grade-submission
   labels:
     app.kubernetes.io/name: grade-submission 
     app.kubernetes.io/component: backend

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grade-submission-portal
+  namespace: grade-submission
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: grade-submission-portal
+  template:
+    metadata:
+      labels:
+        # prefixing with `app.kubernetes.io` to avoid namespace collision with other
+        # kubernetes labels
+        app.kubernetes.io/name: grade-submission
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/instance: grade-submission-portal
+    spec:
+      containers:
+        - name: grade-submission-portal
+          image: rslim087/kubernetes-course-grade-submission-portal
+          env:
+            - name: GRADE_SERVICE_HOST
+              value: grade-submission-api
+          resources:
+            requests: # the min amount of cpu the container needs
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "128Mi" # the workspace where the workspace stores and retrives data for the container
+              # you can throttle compute (CPU) but can't throttle memory
+              # cpu: "200m"
+          ports:
+            - containerPort: 5001
