@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.microservice.name }}
+  namespace: {{ .Values.microservice.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Values.microservice.name }}
+  template:
+    metadata:
+      labels:
+        # prefixing with `app.kubernetes.io` to avoid namespace collision with other
+        # kubernetes labels
+        app.kubernetes.io/name: grade-submission
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/instance: {{ .Values.microservice.name }}
+    spec:
+      containers:
+        - name: {{ .Values.microservice.name }}
+          image: {{ .Values.workload.image }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.microservice.name }}-config
+          resources:
+            requests: # the min amount of cpu the container needs
+              memory: {{ .Values.workload.resources.memory }}
+              cpu: {{ .Values.workload.resources.cpu }}
+            limits:
+              memory: "128Mi" # the workspace where the workspace stores and retrives data for the container
+              # you can throttle compute (CPU) but can't throttle memory
+              # cpu: "200m"
+          ports:
+            - containerPort: {{ .Values.workload.port }}

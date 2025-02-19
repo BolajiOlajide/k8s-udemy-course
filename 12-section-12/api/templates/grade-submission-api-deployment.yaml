@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.microservice.name }}
+  namespace: {{ .Values.microservice.namespace }}
+spec:
+  replicas: {{ .Values.microservice.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # The maximum number of pods that can be created over the desired number of pods.
+      maxSurge: 1 # ensures that we do not have more than 3 pods at any given time.
+      maxUnavailable: 50% # The maximum number of pods that can be unavailable during the update.
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Values.microservice.name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: grade-submission 
+        app.kubernetes.io/component: backend
+        app.kubernetes.io/instance: {{ .Values.microservice.name }}
+    spec:
+      containers:
+        - name: {{ .Values.microservice.name }}
+          image: {{ .Values.workload.image }}
+          # The liveness endpoint returns a 200 status if the application is operational, or a 500 status if it's not. 
+          # The liveness probe checks this endpoint and considers the app healthy only if it receives a 200 status. 
+          # Any other response, or no response at all, triggers a container restart.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.workload.port }}
+            initialDelaySeconds: {{ .Values.workload.livenessDelay }}
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 3
+          # The readiness endpoint verifies if the application has successfully connected to all components necessary for serving traffic. 
+          # It returns a 200 status only when all required connections and initializations are complete, and a 500 status otherwise. 
+          # The readiness probe uses this endpoint to determine if a container is ready to accept traffic. 
+          # If the probe receives anything other than a 200 status, or no response, it keeps the container out of service.
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+
+            # We do not need the inital delay for readiness probe because when the probe makes
+            # a request and it gets a 500 it'll know the application isn't ready yet and block
+            # every traffic to it, which is exactly what we want.
+            # initialDelaySeconds: 15
+
+            periodSeconds: 5
+          envFrom:
+            - secretRef:
+                name: {{ .Values.microservice.name }}-secret
+          resources:
+            requests:
+              memory: "{{ .Values.workload.resources.memory }}"
+              cpu: "{{ .Values.workload.resources.cpu }}"
+            limits:
+              memory: "128Mi"
+          ports:
+            - containerPort: {{ .Values.workload.port }}

@@ -1,0 +1,13 @@
+# We make use of a stateful set instead of a deployment to ensure that each database pod has 
+# it's own unique name and it's own unique storage allocated to it.
+useStatefulSet: true
+auth:
+  enabled: false
+
+image:
+  registry: docker.io
+  repository: mongo
+  tag: 6.0.4-jammy
+
+persistence:
+  mountPath: /data/db

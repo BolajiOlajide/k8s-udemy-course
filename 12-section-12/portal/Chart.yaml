@@ -1,0 +1,4 @@
+apiVersion: v2
+name: grade-submission-portal
+version: 1.0.0
+description: A Helm chart for deploying the grade submission Portal, a frontend service for managing grade data.
