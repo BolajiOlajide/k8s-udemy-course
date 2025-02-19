@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grade-submission-portal
+  namespace: grade-submission
+spec:
+  # this should not be used for non-debugging purposes as it exposes this port on worker
+  # nodes that might not be running this pod and this can be a security risk.
+  # Note: The NodePort service is often used when prototyping, rarely in practice.
+  type: NodePort
+  selector:
+    app.kubernetes.io/instance: grade-submission-portal
+  ports:
+  - port: 5001
+    targetPort: 5001
+    nodePort: 32000 # Limited between 30000 - 32000

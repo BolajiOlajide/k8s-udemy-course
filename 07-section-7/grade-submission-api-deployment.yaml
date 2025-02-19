@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grade-submission-api
+  namespace: grade-submission
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # The maximum number of pods that can be created over the desired number of pods.
+      maxSurge: 1 # ensures that we do not have more than 3 pods at any given time.
+      maxUnavailable: 50% # The maximum number of pods that can be unavailable during the update.
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: grade-submission-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: grade-submission 
+        app.kubernetes.io/component: backend
+        app.kubernetes.io/instance: grade-submission-api
+    spec:
+      containers:
+        - name: grade-submission-api
+          image: rslim087/kubernetes-course-grade-submission-api:stateless-v3
+          # The liveness endpoint returns a 200 status if the application is operational, or a 500 status if it's not. 
+          # The liveness probe checks this endpoint and considers the app healthy only if it receives a 200 status. 
+          # Any other response, or no response at all, triggers a container restart.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 3
+          # The readiness endpoint verifies if the application has successfully connected to all components necessary for serving traffic. 
+          # It returns a 200 status only when all required connections and initializations are complete, and a 500 status otherwise. 
+          # The readiness probe uses this endpoint to determine if a container is ready to accept traffic. 
+          # If the probe receives anything other than a 200 status, or no response, it keeps the container out of service.
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+            # initialDelaySeconds: 15
+            periodSeconds: 5
+          env:
+            - name: MONGODB_HOST
+              value: mongodb # This is the name of the service that we created in mongodb-service.yaml
+            - name: MONGODB_PORT
+              value: "27017" # 27017 is the port defined in the mongodb service
+            - name: MONGODB_USER
+              value: "admin"
+            - name: MONGODB_PASSWORD
+              value: "admin2003"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "128m"
+            limits:
+              memory: "128Mi"
+          ports:
+            - containerPort: 3000

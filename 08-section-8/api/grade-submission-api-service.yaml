@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grade-submission-api
+  namespace: grade-submission
+spec:
+  # ClusterIP Service: the default type for services
+  # Used for internal pod-to-pod communication within the cluster.
+  selector:
+    app.kubernetes.io/instance: grade-submission-api
+  ports:
+  - port: 3000
+    targetPort: 3000
